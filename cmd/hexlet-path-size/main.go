@@ -7,18 +7,19 @@ import (
 "code"
 )
 func main() {
-cmd := &cli.Command{
-Name:   "hexlet-path-size"
-Usage:  "Get path's size"
+cmd := &cli.Command {
 Action: func(ctx context.Context, cmd *cli.Command) error {
 fileName := cmd.Args().Get(0)
-fileSize := code.GetPathSize(fileName)
+fileSize, err := code.GetPathSize(fileName)
+if err != nil {
+return err
+}
 result := fmt.Sprintf("%s\t%s", fileSize, fileName)
 fmt.Println(result)
 return nil
-        },
+},
 }
 if err := cmd.Run(context.Background(), os.Args); err != nil {
-log.Fatal(err)
-        }
+fmt.Println("Ошибка: ", err)
+}
 }
