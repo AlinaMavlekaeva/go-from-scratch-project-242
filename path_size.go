@@ -3,7 +3,7 @@ import (
 "os"
 "fmt"
 )
-func ConvertSize(size int64) string {
+func ConvertSize(size int64, flag bool) string {
 units := map[int]string{
 0: "B",
 1: "KB",
@@ -13,7 +13,7 @@ units := map[int]string{
 5: "PB",
 6: "EB",
 }
-if size < 1024 {
+if !flag || size < 1024 {
 return fmt.Sprintf("%d%s", size, units[0])
 }
 size = size / 1024
@@ -37,14 +37,7 @@ for _, entry := range entries {
 entryInfo, _ := entry.Info()
 dirSize += entryInfo.Size()
 }
-if human {
-return ConvertSize(dirSize), nil
-} else {
-return fmt.Sprintf("%dB", dirSize), nil
+return ConvertSize(dirSize, human), nil
 }
-}
-if human {
-return ConvertSize(info.Size()), nil
-}
-return fmt.Sprintf("%dB", info.Size()), nil
+return ConvertSize(info.Size(), human), nil
 }
