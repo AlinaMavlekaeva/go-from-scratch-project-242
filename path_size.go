@@ -3,6 +3,7 @@ package code
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -28,7 +29,7 @@ func ConvertSize(size int64, convert bool) string {
 	}
 	return fmt.Sprintf("%.1f%s", float64(size), units[6])
 }
-func FilterFiles(path string, all bool) []os.DirEntry {
+func GetDirElements(path string, all bool) []os.DirEntry {
 	selected := []os.DirEntry{}
 	entries, err := os.ReadDir(path)
 	if err != nil {
@@ -45,20 +46,31 @@ func FilterFiles(path string, all bool) []os.DirEntry {
 	}
 	return selected
 }
-
-func GetPathSize(path string, human, all bool) (string, error) {
+func GetDirSize(path string, recursive, all bool) int64 {
+	var dirSize int64 = 0
+	entries := GetDirElements(path, all)
+	for _, entry := range entries {
+		if entry.IsDir() {
+			if recursive {
+				path = filepath.Join(path, entry.Name())
+				dirSize += GetDirSize(path, recursive, all)
+			}
+		} else {
+			fileInfo, _ := entry.Info()
+			dirSize += fileInfo.Size()
+		}
+	}
+	return dirSize
+}
+func GetPathSize(path string, recursive, human, all bool) (string, error) {
 	info, err := os.Lstat(path)
 	if err != nil {
 		return "", err
 	}
-	if info.IsDir() {
-		entries := FilterFiles(path, all)
-		var dirSize int64 = 0
-		for _, entry := range entries {
-			entryInfo, _ := entry.Info()
-			dirSize += entryInfo.Size()
-		}
-		return ConvertSize(dirSize, human), nil
+	if !info.IsDir() {
+		return ConvertSize(info.Size(), human), nil
 	}
-	return ConvertSize(info.Size(), human), nil
+	dirSize := GetDirSize(path, recursive, all)
+	return ConvertSize(dirSize, human), nil
+
 }
