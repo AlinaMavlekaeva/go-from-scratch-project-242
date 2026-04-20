@@ -20,15 +20,14 @@ func ConvertSize(size int64, convert bool) string {
 	if !convert || size < 1024 {
 		return fmt.Sprintf("%d%s", size, units[0])
 	}
-	floatSize := float64(size)
-	floatSize = floatSize / 1024
+	size = size / 1024
 	for i := 1; i < 6; i++ {
 		if size < 1024 {
-			return fmt.Sprintf("%.1f%s", floatSize, units[i])
+			return fmt.Sprintf("%.1f%s", float64(size), units[i])
 		}
 		size = size / 1024
 	}
-	return fmt.Sprintf("%.1f%s", floatSize, units[6])
+	return fmt.Sprintf("%.1f%s", float64(size), units[6])
 }
 func GetDirElements(path string, all bool) []os.DirEntry {
 	selected := []os.DirEntry{}
@@ -63,7 +62,7 @@ func GetDirSize(path string, recursive, all bool) int64 {
 	}
 	return dirSize
 }
-func GetPathSize(path string, human, all, recursive bool) (string, error) {
+func GetPathSize(path string, recursive, human, all bool) (string, error) {
 	info, err := os.Lstat(path)
 	if err != nil {
 		return "", err
