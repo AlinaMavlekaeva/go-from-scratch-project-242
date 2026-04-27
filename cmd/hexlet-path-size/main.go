@@ -17,7 +17,7 @@ func main() {
 			&cli.BoolFlag{
 				Name:    "human",
 				Aliases: []string{"H"},
-				Value:   true,
+				Value:   false,
 				Usage:   "human-readable sizes (auto-select unit)",
 			},
 			&cli.BoolFlag{
@@ -34,13 +34,13 @@ func main() {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			fileName := cmd.Args().Get(0)
-			fileSize, err := code.GetPathSize(fileName, cmd.Bool("human"), cmd.Bool("all"), cmd.Bool("recursive"))
+			path := cmd.Args().Get(0)
+			size, err := code.GetPathSize(path, cmd.Bool("human"), cmd.Bool("all"), cmd.Bool("recursive"))
 			if err != nil {
-				return err
+				fmt.Println("Ошибка: ", err)
 			}
-			result := fmt.Sprintf("%s\t%s", fileSize, fileName)
-			fmt.Println(result)
+			pathSize := fmt.Sprintf("%s\t%s", size, path)
+			fmt.Println(pathSize)
 			return nil
 		},
 	}
