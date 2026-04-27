@@ -72,7 +72,7 @@ hexlet-path-size test -H -a
 ```      
 Вывод: 
 ```
-3.1KB   test
+3.0KB   test
 ```
 **Определение размера директории с учетом всех уровней вложенности (флаг --recursive)**
 Команда: 
@@ -81,7 +81,7 @@ hexlet-path-size test -H -r
 ```    
 Вывод: 
 ```
-3.1KB   test
+3.0KB   test
 ```
 **Определение размера директории с учетом скрытых файлов на всех уровнях вложенности**
 Команда: 
@@ -92,6 +92,8 @@ hexlet-path-size test -H -a -r
 ```
 6.1KB   test
 ```
+**Пример использвания :**
+https://asciinema.org/a/6ekEuy0b6GiSBQlL
 
 
-Asciinema link https://asciinema.org/a/GpujsORGqrXSWRLU
+
