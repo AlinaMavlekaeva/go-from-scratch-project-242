@@ -23,6 +23,9 @@ func IsEntryVisible(entryName string) bool {
 }
 
 func GetSizeString(byteSize int64, isHumanFormat bool) string {
+	if byteSize == 0 {
+		return "0B"
+	}
 	fSize := float64(byteSize)
 	power := math.Log2(fSize)
 	uPower := math.Floor(power*0.1) * 10
@@ -79,19 +82,16 @@ func GetDirSize(path string, includeHiddenElements, recursive bool) int64 {
 	return dirSize
 }
 
-func GetPathSize(path string, human, all, recursive bool) (string, error) {
+func GetPathSize(path string, recursive, human, all bool) (string, error) {
 	info, err := os.Lstat(path)
 	if err != nil {
 		return "", err
 	}
-
 	var pathSize int64
-
 	if info.IsDir() {
 		pathSize = GetDirSize(path, all, recursive)
 	} else {
 		pathSize = info.Size()
 	}
-
 	return GetSizeString(pathSize, human), nil
 }
