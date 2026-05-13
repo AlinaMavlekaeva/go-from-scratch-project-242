@@ -2,96 +2,94 @@ package code
 
 import (
 	"fmt"
-	"math"
 	"os"
 	"path/filepath"
 	"strings"
 )
 
-var unitsByPower = map[float64]string{
-	0:  "B",
-	10: "KB",
-	20: "MB",
-	30: "GB",
-	40: "TB",
-	50: "PB",
-	60: "EB",
-}
-
-func IsEntryVisible(entryName string) bool {
+func isVisible(entryName string) bool {
 	return !strings.HasPrefix(entryName, ".")
 }
 
-func GetSizeString(byteSize int64, isHumanFormat bool) string {
-	if byteSize == 0 {
-		return "0B"
+func formatSize(byteSize int64, human bool) string {
+	if !human {
+		return fmt.Sprintf("%dB", byteSize)
 	}
-	fSize := float64(byteSize)
-	power := math.Log2(fSize)
-	uPower := math.Floor(power*0.1) * 10
-	if !isHumanFormat || uPower == 0 {
-		return fmt.Sprintf("%d%s", byteSize, unitsByPower[uPower])
+	units := []string{"B", "KB", "MB", "GB", "TB", "PB", "EB"}
+	val, i := float64(byteSize), 0
+	for val >= 1024 && i < len(units)-1 {
+		val /= 1024
+		i++
 	}
-	if int(uPower) < len(unitsByPower)*10 {
-		fSize = math.Pow(2, power-uPower)
-		return fmt.Sprintf("%.1f%s", fSize, unitsByPower[uPower])
+	if i == 0 {
+		return fmt.Sprintf("%d%s", byteSize, units[i])
 	}
-	return "Размер файла превышает 1024EB"
+	return fmt.Sprintf("%.1f%s", val, units[i])
 }
 
-func GetDirElements(path string, includeHiddenElements bool) []os.DirEntry {
+func filterDirEntries(entries []os.DirEntry) []os.DirEntry {
+	filtred := []os.DirEntry{}
+	for _, entry := range entries {
+		if isVisible(entry.Name()) {
+			filtred = append(filtred, entry)
+		}
+	}
+	return filtred
+}
+func getDirSize(path string, all, recursive bool) (int64, error) {
+	var dirSize int64
 	entries, err := os.ReadDir(path)
 	if err != nil {
-		fmt.Println("Ошибка: ", err)
-		return nil
+		return 0, err
 	}
-	if includeHiddenElements {
-		return entries
+	if !all {
+		entries = filterDirEntries(entries)
 	}
-	visibleElements := []os.DirEntry{}
 	for _, entry := range entries {
-		if IsEntryVisible(entry.Name()) {
-			visibleElements = append(visibleElements, entry)
+		info, err := entry.Info()
+		if err != nil {
+			return 0, err
 		}
-	}
-	return visibleElements
-}
-func getFileSize(file os.DirEntry, includeHiddenElement bool) int64 {
-	fileInfo, _ := file.Info()
-	fileName := fileInfo.Name()
-	excludeFile := !includeHiddenElement && !IsEntryVisible(fileName)
-	if excludeFile {
-		return 0
-	}
-	return fileInfo.Size()
-}
-
-func GetDirSize(path string, includeHiddenElements, recursive bool) int64 {
-	var dirSize int64
-	entries := GetDirElements(path, includeHiddenElements)
-	for _, entry := range entries {
+		sub := filepath.Join(path, entry.Name())
 		if entry.IsDir() {
 			if recursive {
-				path = filepath.Join(path, entry.Name())
-				dirSize += GetDirSize(path, includeHiddenElements, recursive)
+				subSize, err := getDirSize(sub, all, recursive)
+				if err != nil {
+					return 0, err
+				}
+				dirSize += subSize
 			}
 		} else {
-			dirSize += getFileSize(entry, includeHiddenElements)
+			if info.Mode()&os.ModeSymlink != 0 {
+				symInfo, err := os.Stat(entry.Name())
+				if err != nil {
+					return 0, err
+				}
+				dirSize += symInfo.Size()
+			}
+			fileSize := info.Size()
+			dirSize += fileSize
 		}
 	}
-	return dirSize
+	return dirSize, nil
 }
-
 func GetPathSize(path string, recursive, human, all bool) (string, error) {
-	info, err := os.Lstat(path)
+	if !all && !isVisible(filepath.Base(path)) {
+		return formatSize(0, human), nil
+	}
+	info, err := os.Stat(path)
 	if err != nil {
 		return "", err
 	}
 	var pathSize int64
 	if info.IsDir() {
-		pathSize = GetDirSize(path, all, recursive)
+		dirSize, err := getDirSize(path, all, recursive)
+		if err != nil {
+			return "", err
+		}
+		pathSize = dirSize
 	} else {
 		pathSize = info.Size()
 	}
-	return GetSizeString(pathSize, human), nil
+	return formatSize(pathSize, human), nil
 }
