@@ -37,7 +37,7 @@ func main() {
 			path := cmd.Args().Get(0)
 			size, err := code.GetPathSize(path, cmd.Bool("recursive"), cmd.Bool("human"), cmd.Bool("all"))
 			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
+				return cli.Exit(err.Error(), 1)
 			}
 			pathSize := fmt.Sprintf("%s\t%s", size, path)
 			fmt.Println(pathSize)
