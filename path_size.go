@@ -55,10 +55,6 @@ func getDirSize(path string, all, recursive bool) (int64, error) {
 	return dirSize, nil
 }
 func GetPathSize(path string, recursive, human, all bool) (string, error) {
-	if !all && !isVisible(filepath.Base(path)) {
-		err := fmt.Errorf("Указан путь к скрытому файлу, используйте флаг -a")
-		return "0", err
-	}
 	info, err := os.Stat(path)
 	if err != nil {
 		return "", err
